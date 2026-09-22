@@ -16,7 +16,6 @@ def evaluate(model, dataset, processor, max_new_tokens=200):
             **batch,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            repetition_penalty=1.1,
         )
         texts += processor.batch_decode(
             outputs[:, batch["input_ids"].shape[1] :], skip_special_tokens=True
