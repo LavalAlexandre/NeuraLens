@@ -1,0 +1,6 @@
+sanic
+pycocotools
+opencv-python-headless
+numpy
+pillow
+requests

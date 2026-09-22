@@ -3,7 +3,7 @@ from PIL import Image
 import io
 
 # Endpoint of your Sanic server
-URL = "http://localhost:8000/mask"
+URL = "http://localhost:8050/mask"
 
 # Your payload (make sure this is valid RLE data)
 payload = {
