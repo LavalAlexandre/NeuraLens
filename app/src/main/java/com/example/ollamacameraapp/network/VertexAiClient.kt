@@ -6,8 +6,6 @@ import com.example.ollamacameraapp.model.Content
 import com.example.ollamacameraapp.model.ImageUrl
 import com.example.ollamacameraapp.model.Instance
 import com.example.ollamacameraapp.model.Message
-import com.example.ollamacameraapp.model.TtsRequest
-import com.example.ollamacameraapp.model.TtsResponse
 import com.example.ollamacameraapp.model.VertexRequest
 import com.example.ollamacameraapp.model.VertexResponse
 import io.ktor.client.HttpClient
@@ -72,28 +70,5 @@ class VertexAiClient {
         Log.d("VertexResponse", rawResponse)
         val response = json.decodeFromString<VertexResponse>(rawResponse)
         return response.getContent() ?: "No description found"
-    }
-
-    suspend fun getAudio(text: String, accessToken: String): ByteArray? {
-        val rawResponse: String = try {
-            client.post("https://5939951040362184704.europe-west4-205700227746.prediction.vertexai.goog/v1/projects/gemma-hcls25par-723/locations/europe-west4/endpoints/5939951040362184704:predict") {
-                header("Authorization", "Bearer $accessToken")
-                contentType(ContentType.Application.Json)
-                setBody(TtsRequest(
-                    instances = listOf(
-                        com.example.ollamacameraapp.model.TtsInstance(
-                            text = text
-                        )
-                    )
-                ))
-            }.bodyAsText()
-        } catch (e: Exception) {
-            Log.e("VertexAiClient", "Error making TTS request", e)
-            return null
-        }
-
-        Log.d("VertexTtsResponse", rawResponse)
-        val response = json.decodeFromString<TtsResponse>(rawResponse)
-        return response.getAudioContentAsBytes()
     }
 }

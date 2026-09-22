@@ -203,8 +203,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                     while (true) {
                         try {
                             val file = takePictureForLLM(imageCapture, this@MainActivity)
-                            val accessToken = "YOUR_TOKEN" // TODO: Replace with your actual access token
-                            description = client.getDescription(file, accessToken)
+                            description = client.getDescription(file, BuildConfig.VERTEX_ACCESS_TOKEN)
                             hasError = description.startsWith("Error:")
 
                             if (!hasError && description != "...") {
