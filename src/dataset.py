@@ -83,23 +83,14 @@ class tissue_dataset:
         type_options = "\n".join(f"{i}: {t}" for i, t in enumerate(self.type_classes))
         zoom_options = "\n".join(f"{i}: {z}x" for i, z in enumerate(self.zoom_classes))
         focus_options = "\n".join(f"{i}: {f}" for i, f in enumerate(FOCUS_NAMES))
-        self.PROMPT = f"""Analyze this histopathology image and provide the following information:
-
-        Tissue Type:
-        {type_options}
-
-        Zoom Level:
-        {zoom_options}
-
-        Focus Quality:
-        {focus_options}
-
-        Please respond in the following JSON format:
-        {{
-        "tissue_type": "X: tissue_name",
-        "zoom_level": "Y: Zx",
-        "focus_quality": "Z: focus_status"
-        }}"""
+        self.PROMPT = (
+            "Analyze this histopathology image and provide the following information:\n\n"
+            f"Tissue Type:\n{type_options}\n\n"
+            f"Zoom Level:\n{zoom_options}\n\n"
+            f"Focus Quality:\n{focus_options}\n\n"
+            "Please respond in the following JSON format:\n"
+            '{\n"tissue_type": "X: tissue_name",\n"zoom_level": "Y: Zx",\n"focus_quality": "Z: focus_status"\n}'
+        )
 
         self.dataset = DatasetDict(
             {
@@ -136,7 +127,7 @@ class tissue_dataset:
                 example["messages"],
                 add_generation_prompt=pad_left,
                 tokenize=False,
-            ).strip()
+            )
             encoded.append(self.processor(text=[text], images=[image], return_tensors="pt"))
 
         batch = {"pixel_values": torch.cat([e["pixel_values"] for e in encoded])}
@@ -158,6 +149,14 @@ class tissue_dataset:
         labels[batch["attention_mask"] == 0] = -100
         labels[labels == boi_id] = -100
         labels[labels == IMAGE_SOFT_TOKEN_ID] = -100
+        if not pad_left:
+            # Train only on the answer: mask everything up to the model's turn
+            marker = self.processor.tokenizer.encode(
+                "<start_of_turn>model\n", add_special_tokens=False
+            )
+            for row, ids in enumerate(batch["input_ids"].tolist()):
+                answer_start = _find_last(ids, marker) + len(marker)
+                labels[row, :answer_start] = -100
         batch["labels"] = labels
         return batch
 
@@ -202,3 +201,10 @@ def _leading_index(value: Any) -> int:
         return int(str(value).split(":")[0].strip())
     except ValueError:
         return -1
+
+
+def _find_last(ids: list[int], pattern: list[int]) -> int:
+    for start in range(len(ids) - len(pattern), -1, -1):
+        if ids[start : start + len(pattern)] == pattern:
+            return start
+    raise ValueError("Model turn marker not found in the training example")
